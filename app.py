@@ -14,7 +14,7 @@ with open("face_vectors.pkl", "rb") as f:
     face_vectors = pickle.load(f)
 
 # Hàm tìm người giống nhất
-def find_best_match(img_path, threshold=0.9):
+def find_best_match(img_path, threshold=0.95):
     img = face_recognition.load_image_file(img_path)
     encodings = face_recognition.face_encodings(img)
 
@@ -44,7 +44,7 @@ def index():
             return render_template('index.html', error='No files selected')
 
         results = []
-        for file in files[:10]:  # Process up to 10 files
+        for file in files:  # Process up to 10 files
             if file.filename == '':  # Ignore empty filenames
                 continue
 

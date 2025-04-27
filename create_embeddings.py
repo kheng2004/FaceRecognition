@@ -1,10 +1,6 @@
 import os
 import face_recognition
 import pickle
-import numpy as np
-
-
-
 
 def create_embeddings(dataset_path='dataset', output_path='face_vectors.pkl'):
     face_vectors = {}
@@ -21,18 +17,17 @@ def create_embeddings(dataset_path='dataset', output_path='face_vectors.pkl'):
             encodings = face_recognition.face_encodings(img)
 
             if encodings:
-                person_encodings.append(encodings[0])
-
+                person_encodings.append(encodings[0])  # Lấy encoding đầu tiên
+            else:
+                print(f"Warning: No face found in {img_path}")
         if person_encodings:
-            # Lấy trung bình vector của nhiều ảnh
-            avg_encoding = np.mean(person_encodings, axis=0)
-            face_vectors[person_name] = avg_encoding
+            face_vectors[person_name] = person_encodings
 
-    # Lưu lại
+    # Lưu lại tất cả vectors
     with open(output_path, 'wb') as f:
         pickle.dump(face_vectors, f)
 
     print(f"Saved embeddings for {len(face_vectors)} people to {output_path}")
 
-# --- GỌI THỰC THI ---
+# --- GỌI ---
 create_embeddings("database_faces")

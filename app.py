@@ -13,8 +13,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 with open("face_vectors.pkl", "rb") as f:
     face_vectors = pickle.load(f)
 
+from sklearn.metrics.pairwise import cosine_similarity
+
 # Hàm tìm người giống nhất
-def find_best_match(img_path, threshold=0.95):
+def find_best_match(img_path, threshold=0.94, margin=0.02):
     img = face_recognition.load_image_file(img_path)
     encodings = face_recognition.face_encodings(img)
 
@@ -22,19 +24,32 @@ def find_best_match(img_path, threshold=0.95):
         return "No face detected", 0.0
 
     query_vec = encodings[0]
-    best_score = -1
-    best_name = "Unknown"
+    similarities = []
 
-    for name, vec in face_vectors.items():
-        score = cosine_similarity([query_vec], [vec])[0][0]
-        if score > best_score:
-            best_score = score
-            best_name = name
+    for name, vec_list in face_vectors.items():
+        # vec_list là danh sách vectors (1 người nhiều vector)
+        for vec in vec_list:
+            score = cosine_similarity([query_vec], [vec])[0][0]
+            similarities.append((name, score))
 
-    if best_score >= threshold:
-        return best_name, best_score
+    # Sắp xếp theo điểm cosine giảm dần
+    similarities.sort(key=lambda x: x[1], reverse=True)
+
+    top1_name, top1_score = similarities[0]
+    # Tìm top2: khác class với top1 (nếu có)
+    top2_score = 0.0
+    for name, score in similarities[1:]:
+        if name != top1_name:
+            top2_score = score
+            break
+
+    # Kiểm tra điều kiện nhận dạng
+    if (top1_score >= threshold) and ((top1_score - top2_score) >= margin):
+        return top1_name, top1_score
     else:
-        return "Unknown", best_score
+        return "Unknown", top1_score
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
